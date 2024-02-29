@@ -414,6 +414,9 @@ require('lazy').setup {
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
+      -- Roslyn.nvim
+      'jmederosalvarado/roslyn.nvim',
+
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
@@ -448,79 +451,80 @@ require('lazy').setup {
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
-        callback = function(event)
-          -- NOTE: Remember that lua is a real programming language, and as such it is possible
-          -- to define small helper and utility functions so you don't have to repeat yourself
-          -- many times.
-          --
-          -- In this case, we create a function that lets us more easily define mappings specific
-          -- for LSP related items. It sets the mode, buffer and description for us each time.
-          local map = function(keys, func, desc)
-            vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
-          end
 
-          -- Jump to the definition of the word under your cursor.
-          --  This is where a variable was first declared, or where a function is defined, etc.
-          --  To jump back, press <C-T>.
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-
-          -- Find references for the word under your cursor.
-          map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-
-          -- Jump to the implementation of the word under your cursor.
-          --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-
-          -- Jump to the type of the word under your cursor.
-          --  Useful when you're not sure what type a variable is and you want to see
-          --  the definition of its *type*, not where it was *defined*.
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-
-          -- Fuzzy find all the symbols in your current document.
-          --  Symbols are things like variables, functions, types, etc.
-          map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-
-          -- Fuzzy find all the symbols in your current workspace
-          --  Similar to document symbols, except searches over your whole project.
-          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-
-          -- Rename the variable under your cursor
-          --  Most Language Servers support renaming across files, etc.
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-
-          -- Execute a code action, usually your cursor needs to be on top of an error
-          -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-
-          -- Opens a popup that displays documentation about the word under your cursor
-          --  See `:help K` for why this keymap
-          map('K', vim.lsp.buf.hover, 'Hover Documentation')
-
-          -- WARN: This is not Goto Definition, this is Goto Declaration.
-          --  For example, in C this would take you to the header
-          map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-
-          -- The following two autocommands are used to highlight references of the
-          -- word under your cursor when your cursor rests there for a little while.
-          --    See `:help CursorHold` for information about when this is executed
-          --
-          -- When you move your cursor, the highlights will be cleared (the second autocommand).
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client.server_capabilities.documentHighlightProvider then
-            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-              buffer = event.buf,
-              callback = vim.lsp.buf.document_highlight,
-            })
-
-            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-              buffer = event.buf,
-              callback = vim.lsp.buf.clear_references,
-            })
-          end
-        end,
-      })
+      -- vim.api.nvim_create_autocmd('LspAttach', {
+      --   group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
+      --   callback = function(event)
+      --     -- NOTE: Remember that lua is a real programming language, and as such it is possible
+      --     -- to define small helper and utility functions so you don't have to repeat yourself
+      --     -- many times.
+      --     --
+      --     -- In this case, we create a function that lets us more easily define mappings specific
+      --     -- for LSP related items. It sets the mode, buffer and description for us each time.
+      --     local map = function(keys, func, desc)
+      --       vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
+      --     end
+      --
+      --     -- Jump to the definition of the word under your cursor.
+      --     --  This is where a variable was first declared, or where a function is defined, etc.
+      --     --  To jump back, press <C-T>.
+      --     map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+      --
+      --     -- Find references for the word under your cursor.
+      --     map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+      --
+      --     -- Jump to the implementation of the word under your cursor.
+      --     --  Useful when your language has ways of declaring types without an actual implementation.
+      --     map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+      --
+      --     -- Jump to the type of the word under your cursor.
+      --     --  Useful when you're not sure what type a variable is and you want to see
+      --     --  the definition of its *type*, not where it was *defined*.
+      --     map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+      --
+      --     -- Fuzzy find all the symbols in your current document.
+      --     --  Symbols are things like variables, functions, types, etc.
+      --     map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+      --
+      --     -- Fuzzy find all the symbols in your current workspace
+      --     --  Similar to document symbols, except searches over your whole project.
+      --     map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+      --
+      --     -- Rename the variable under your cursor
+      --     --  Most Language Servers support renaming across files, etc.
+      --     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+      --
+      --     -- Execute a code action, usually your cursor needs to be on top of an error
+      --     -- or a suggestion from your LSP for this to activate.
+      --     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+      --
+      --     -- Opens a popup that displays documentation about the word under your cursor
+      --     --  See `:help K` for why this keymap
+      --     map('K', vim.lsp.buf.hover, 'Hover Documentation')
+      --
+      --     -- WARN: This is not Goto Definition, this is Goto Declaration.
+      --     --  For example, in C this would take you to the header
+      --     map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+      --
+      --     -- The following two autocommands are used to highlight references of the
+      --     -- word under your cursor when your cursor rests there for a little while.
+      --     --    See `:help CursorHold` for information about when this is executed
+      --     --
+      --     -- When you move your cursor, the highlights will be cleared (the second autocommand).
+      --     local client = vim.lsp.get_client_by_id(event.data.client_id)
+      --     if client and client.server_capabilities.documentHighlightProvider then
+      --       vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+      --         buffer = event.buf,
+      --         callback = vim.lsp.buf.document_highlight,
+      --       })
+      --
+      --       vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+      --         buffer = event.buf,
+      --         callback = vim.lsp.buf.clear_references,
+      --       })
+      --     end
+      --   end,
+      -- })
 
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP Specification.
@@ -528,6 +532,27 @@ require('lazy').setup {
       --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+      local on_attach = function(server_name)
+        return function(_, bufnr)
+          local format_cmd
+          if server_name == 'fsautocomplete' then
+            format_cmd = '<cmd>silent !fantomas %<CR>'
+          else
+            format_cmd = vim.lsp.buf.format
+          end
+
+          vim.keymap.set('n', '<leader>cf', format_cmd)
+          vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename)
+          vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action)
+          vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions)
+          vim.keymap.set('n', 'gr', require('telescope.builtin').lsp_references)
+          vim.keymap.set('n', 'gI', require('telescope.builtin').lsp_implementations)
+          vim.keymap.set('n', '<leader>ds', require('telescope.builtin').lsp_document_symbols)
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover)
+          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help)
+        end
+      end
 
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
@@ -549,7 +574,9 @@ require('lazy').setup {
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
+        tsserver = {},
+        html = {},
+        cssls = {},
         --
 
         lua_ls = {
@@ -577,6 +604,11 @@ require('lazy').setup {
         },
       }
 
+      require('roslyn').setup {
+        on_attach = on_attach 'roslyn',
+        capabilities = capabilities,
+      }
+
       -- Ensure the servers and tools above are installed
       --  To check the current status of installed tools and/or manually install
       --  other tools, you can run
@@ -601,6 +633,7 @@ require('lazy').setup {
               cmd = server.cmd,
               settings = server.settings,
               filetypes = server.filetypes,
+              on_attach = on_attach(server_name),
               -- This handles overriding only values explicitly passed
               -- by the server configuration above. Useful when disabling
               -- certain features of an LSP (for example, turning off formatting for tsserver)
@@ -627,7 +660,7 @@ require('lazy').setup {
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
+        javascript = { { 'prettierd', 'prettier' } },
       },
     },
   },
@@ -784,11 +817,55 @@ require('lazy').setup {
 
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup {
-        ensure_installed = { 'bash', 'c', 'html', 'lua', 'markdown', 'vim', 'vimdoc' },
+        ensure_installed = { 'bash', 'c', 'html', 'lua', 'markdown', 'vim', 'vimdoc', 'c_sharp', 'javascript', 'json', 'typescript', 'xml', 'css' },
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = { enable = true },
         indent = { enable = true },
+        incremental_selection = {
+          enable = true,
+          keymaps = {
+            init_selection = '<c-space>',
+            node_incremental = '<c-space>',
+            scope_incremental = '<c-s>',
+            node_decremental = '<M-space>',
+          },
+        },
+        textobjects = {
+          select = {
+            enable = true,
+            lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
+            keymaps = {
+              -- You can use the capture groups defined in textobjects.scm
+              ['aa'] = '@parameter.outer',
+              ['ia'] = '@parameter.inner',
+              ['af'] = '@function.outer',
+              ['if'] = '@function.inner',
+              ['ac'] = '@class.outer',
+              ['ic'] = '@class.inner',
+            },
+          },
+          move = {
+            enable = true,
+            set_jumps = true, -- whether to set jumps in the jumplist
+            goto_next_start = {
+              [']m'] = '@function.outer',
+              [']]'] = '@class.outer',
+            },
+            goto_next_end = {
+              [']M'] = '@function.outer',
+              [']['] = '@class.outer',
+            },
+            goto_previous_start = {
+              ['[m'] = '@function.outer',
+              ['[['] = '@class.outer',
+            },
+            goto_previous_end = {
+              ['[M'] = '@function.outer',
+              ['[]'] = '@class.outer',
+            },
+          },
+        },
       }
 
       -- There are additional nvim-treesitter modules that you can use to interact
